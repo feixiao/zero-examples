@@ -1,8 +1,11 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
+	"monolithic/internal/logic"
+	"net/http"
 
 	"monolithic/internal/config"
 	"monolithic/internal/handler"
@@ -23,6 +26,20 @@ func main() {
 	ctx := svc.NewServiceContext(c)
 	server := rest.MustNewServer(c.RestConf)
 	defer server.Stop()
+
+	upload := logic.NewUploadLogic(context.Background(), ctx)
+
+	server.AddRoutes(
+		[]rest.Route{
+			{
+				Method: http.MethodPost,
+				Path:   "/upload",
+				Handler: func(w http.ResponseWriter, r *http.Request) {
+					upload.Upload(ctx, w, r)
+				},
+			},
+		},
+	)
 
 	handler.RegisterHandlers(server, ctx)
 
